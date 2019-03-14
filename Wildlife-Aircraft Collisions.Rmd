@@ -1,0 +1,151 @@
+---
+title: "Wildlife-Aircraft Collisions"
+author: "Tricia"
+date: "2/19/2019"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing the Data and Removing the NAs/Unknowns
+```{r}
+aircraft_strikes <- readr::read_csv("~/Desktop/FAA_National_Wildlife_Aircraft_Strike_Database__Year_2000_and_after_.csv", na = c("", " ", "NA", "#N/A", "-999", "\\", "UNKNOWN", "UNKNOWN - SMALL", "UNKNOWN - MEDIUM", "UNKNOWN - LARGE", "UNK", "UNKNOWN BIRD", "UNKNOWN BIRD - SMALL", "UNKNOWN BIRD - MEDIUM", "UNKNOWN BIRD - LARGE"))
+```
+
+# Summary functions! Let's take a look at the data.
+
+```{r}
+names(aircraft_strikes)
+```
+
+
+## Load the libraries  
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(skimr)
+library("RColorBrewer")
+```
+
+## View the data.
+```{r}
+glimpse(aircraft_strikes)
+```
+
+
+## Which species is recorded as being hit the most?
+```{r}
+aircraft_strikes %>% 
+  filter(Species!= "UNKNOWN") %>% 
+  count(Species) %>% 
+  arrange(desc(n)) 
+```
+
+## On average, how fast were the aircrafts going when they collided with the wildlife?
+```{r}
+aircraft_strikes %>% 
+  ggplot(aes(x=Speed)) +
+  geom_histogram(fill="yellowgreen", alpha=.8, color="forestgreen")+
+  labs(title = "Distribution of Speed")
+```
+## American kestrels and red-tailed hawks are two common birds of prey. Let's compare the average speeds of the aircrafts when they collided with these birds. 
+
+
+```{r}
+aircraft_strikes %>% 
+  filter(Species=="AMERICAN KESTREL" | Species =="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=Speed))+
+  geom_boxplot(color="darkgray")+
+  labs(title = "Speed of Collisions involving American Kestrels vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Speed")+
+  theme(plot.title = element_text(size = rel(1.25)))
+```
+## Based on the boxplot, do you think these speeds are above average, average, or below average compared to other wildlife species?
+
+These speeds lie near the peak of the distribution, suggesting that they are average.
+
+## Let's see what the real average speed is and compare these speeds to the average.
+
+```{r}
+aircraft_strikes %>% 
+  summarise(avgspeed=mean(Speed, na.rm=T))
+```
+```{r}
+aircraft_strikes %>% 
+  filter(Species=="AMERICAN KESTREL") %>% 
+  summarise(avgspeed_kestrel=mean(Speed, na.rm=T))
+```
+
+```{r}
+aircraft_strikes %>% 
+  filter(Species=="RED-TAILED HAWK") %>% 
+  summarise(avgspeed_hawk=mean(Speed, na.rm=T))
+```
+
+These average speeds of the aircrafts that collided with American kestrels and red-tailed hawks are somewhat below average.
+
+## Which airports have had the most collisions with which species?
+```{r}
+species <- 
+aircraft_strikes %>% 
+  filter(!Size=="NA", 
+         !Species=="UNKNOWN BIRD - SMALL",
+         !Species=="NA",
+         !Species=="UNKNOWN BIRD - MEDIUM",
+         !Species=="UNKNOWN BIRD - LARGE") %>% 
+  group_by(Airport, City, Speed, Sky, Species) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+species
+```
+
+## Between the American kestrel and the red-tailed hawk, which species was involved in more collisions?
+```{r}
+species %>% 
+  filter(Species=="AMERICAN KESTREL" | Species=="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=count))+
+  geom_boxplot(color="darkgray")+
+  labs(title = "Collisions of American Kestrels vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Count")+
+  theme(plot.title = element_text(size = rel(1.25)))+
+  theme_light()+
+  scale_y_log10()
+```
+
+
+## Let's also look at the speeds of the aircrafts when they struck geese versus the red-tailed hawk, which are examples of waterfowl and birds of prey, respectively. In general, which species encountered faster moving aircrafts? 
+```{r}
+species %>% 
+  filter(Species=="GEESE" | Species=="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=Speed))+
+  geom_boxplot(fill="lavender")+
+  labs(title = "Collisions of Geese vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Speed")+
+  theme(plot.title = element_text(size = rel(1.25)))+
+  scale_fill_brewer(palette = "BrBG")+
+  theme_light()
+```
+
+##Did the sky conditions affect the speeds at which they collided with the aircrafts?
+
+```{r}
+species %>% 
+  filter(Species=="GEESE" | Species=="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=Speed, fill=Sky))+
+  geom_boxplot()+
+  labs(title = "Collisions of Geese vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Speed")+
+  theme(plot.title = element_text(size = rel(1.25)))+
+  scale_fill_brewer(palette = "BrBG")+
+  theme_light()
+```
+
+
+
