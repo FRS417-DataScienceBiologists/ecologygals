@@ -1,0 +1,153 @@
+---
+title: "Project"
+author: "Lauren Alimento"
+date: "2/25/2019"
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+keep_md: true
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+aircraft_strikes <-
+  readr::read_csv(file = "~/Desktop/FRS 417/ecologygals-master/FAA_National_Wildlife_Aircraft_Strike_Database__Year_2000_and_after_.csv")
+```
+```{r}
+glimpse(aircraft_strikes)
+```
+
+```{r}
+names(aircraft_strikes)
+```
+
+```{r}
+gather(aircraft_strikes)
+```
+
+
+```{r}
+aircraft_strikes_tidy <-
+  aircraft_strikes %>% 
+  na_if("UNKNOWN") %>% 
+  na_if("UNKNOWN BIRD") %>% 
+  na_if("UNK") %>% 
+  na_if("UNKNOWN BIRD - SMALL") %>% 
+  na_if("UNKNOWN BIRD - MEDIUM") %>% 
+  na_if("UNKNOWN BIRD - SMALL")
+aircraft_strikes_tidy
+```
+
+
+```{r}
+names(aircraft_strikes_tidy)
+```
+
+```{r}
+strikes_by_airline <- 
+aircraft_strikes_tidy %>% 
+  group_by(Operator) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+strikes_by_airline
+```
+
+
+```{r}
+strikes_by_airline %>%
+  top_n(20, count) %>% 
+  ggplot(aes(x=reorder(Operator, count), y=count,fill=Operator))+
+  geom_col()+
+  coord_flip()+
+  labs(title="Strikesm by Airline",
+       x="Airlines",
+       y="Number of Strikes")
+```
+
+```{r}
+aircraft_strikes_tidy %>% 
+  count(Species) %>% 
+  arrange(desc(n))
+```
+
+
+```{r}
+aircraft_strikes_tidy %>% 
+  filter(!`Birds Struck`>1) %>% 
+  ggplot(aes(x=Size, y=as.numeric(`Birds Struck`)))+
+  geom_col(fill="lightseagreen",alpha=0.5)+
+  labs(title="Birds Struck by Size",
+       x="Bird Size",
+       y="Number of Birds Struck")
+```
+
+```{r}
+aircraft_strikes_tidy %>%
+  filter(!Size=="NA") %>% 
+  group_by(Size) %>% 
+  summarize(count=n()) %>% 
+  ggplot(aes(x=Size, y=count))+
+  geom_col(fill="lightseagreen",alpha=0.5)+
+  labs(title="Number of Birds by Size",
+       x="Bird Size",
+       y="Number of Birds")
+```
+
+```{r}
+airport_species <- 
+aircraft_strikes_tidy %>% 
+  group_by(Airport, Species) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+airport_species
+```
+
+```{r}
+strikes_by_airport <- 
+aircraft_strikes_tidy %>% 
+  group_by(Airport) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+strikes_by_airport
+```
+
+```{r}
+strikes_by_airport %>%
+  top_n(20, count) %>% 
+  ggplot(aes(x=reorder(Airport, count), y=count, fill=Airport))+
+  geom_col()+
+  coord_flip()+
+  labs(title="Strikes by Airport",
+       y="Number of Strikes",
+       x="Airport")
+```
+```{r}
+strikes_by_state <- 
+aircraft_strikes_tidy %>% 
+  group_by(State) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+strikes_by_state
+```
+```{r}
+strikes_by_state %>%
+  top_n(20, count) %>% 
+  ggplot(aes(x=reorder(State, count), y=count, fill=State))+
+  geom_col()+
+  coord_flip()+
+  labs(title="Strikes by State",
+       x="State",
+       y="Number of Strikes")
+```
+
+```{r}
+airports_by_state <- 
+aircraft_strikes_tidy %>% 
+  select(State, Airport) %>% 
+  count(State) 
+airports_by_state
+```
+
