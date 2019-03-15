@@ -1,0 +1,345 @@
+---
+title: "Wildlife-Aircraft Collisions"
+author: "Lauren, Michelle, Tricia"
+date: "3/15/2019"
+output: ioslides_presentation
+keep_md: true
+autosize: true
+---
+<style>
+pre {
+  font-size: 11px;
+}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+---
+
+##Hi, we're Lauren, Michelle, & Tricia {.smaller}
+> We will be talking about aircraft collisions with various types of wildlife (2000-) using data from the Federal Aviation Administration.
+> Site: https://opendata.socrata.com/Government/FAA-National-Wildlife-Aircraft-Strike-Database-Yea/9r8b-gr46/data
+<img src="birdplane.jpg" alt="birdplane" width="400"/>
+
+## Load the libraries {.smaller}   
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(skimr)
+library("RColorBrewer")
+```
+
+## Importing the Data without the NAs/Unknowns {.smaller}
+```{r}
+aircraft_strikes <- readr::read_csv("~/Desktop/FRS 417/ecologygals/FAA_National_Wildlife_Aircraft_Strike_Database__Year_2000_and_after_.csv", na = c("", " ", "NA", "#N/A", "-999", "\\", "UNKNOWN", "UNKNOWN - SMALL", "UNKNOWN - MEDIUM", "UNKNOWN - LARGE", "UNK", "UNKNOWN BIRD", "UNKNOWN BIRD - SMALL", "UNKNOWN BIRD - MEDIUM", "UNKNOWN BIRD - LARGE"))
+```
+
+## Lauren's Slides
+
+## Summary functions! {.smaller}
+
+```{r}
+glimpse(aircraft_strikes)
+```
+
+```{r}
+names(aircraft_strikes)
+```
+
+```{r}
+gather(aircraft_strikes)
+```
+
+## Cleaning up Data {.smaller}
+```{r}
+aircraft_strikes_tidy <-
+  aircraft_strikes %>% 
+  na_if("UNKNOWN") %>% 
+  na_if("UNKNOWN BIRD") %>% 
+  na_if("UNK") %>% 
+  na_if("UNKNOWN BIRD - SMALL") %>% 
+  na_if("UNKNOWN BIRD - MEDIUM") %>% 
+  na_if("UNKNOWN BIRD - SMALL")
+aircraft_strikes_tidy
+```
+
+---
+```{r}
+names(aircraft_strikes_tidy)
+```
+
+## Strikes by Airline {.smaller}
+```{r}
+strikes_by_airline <- 
+aircraft_strikes_tidy %>% 
+  group_by(Operator) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+strikes_by_airline
+```
+
+## Strikes by Airline Plot
+```{r}
+strikes_by_airline %>%
+  top_n(20, count) %>% 
+  ggplot(aes(x=reorder(Operator, count), y=count,fill=Operator))+
+  geom_col()+
+  coord_flip()+
+  labs(title="Strikes by Airline",
+       x="Airlines",
+       y="Number of Strikes")
+```
+
+## Strikes by Airport
+```{r}
+strikes_by_airport <- 
+aircraft_strikes_tidy %>% 
+  group_by(Airport) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+strikes_by_airport
+```
+
+## Strikes by Airport Graph
+```{r}
+strikes_by_airport %>%
+  top_n(20, count) %>% 
+  ggplot(aes(x=reorder(Airport, count), y=count, fill=Airport))+
+  geom_col()+
+  coord_flip()+
+  labs(title="Strikes by Airport",
+       y="Number of Strikes",
+       x="Airport")
+```
+## Strikes by State
+```{r}
+strikes_by_state <- 
+aircraft_strikes_tidy %>% 
+  group_by(State) %>% 
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+strikes_by_state
+```
+## Strikes by State Graph
+```{r}
+strikes_by_state %>%
+  top_n(20, count) %>% 
+  ggplot(aes(x=reorder(State, count), y=count, fill=State))+
+  geom_col()+
+  coord_flip()+
+  labs(title="Strikes by State",
+       x="State",
+       y="Number of Strikes")
+```
+
+
+## Michelle's Slides
+
+```{r}
+gather(aircraft_strikes)
+```
+
+## Is the data tidy? If so, how do you know?
+
+No because values are not sorted into clean columns and have scattered observations that can be grouped together.
+
+```{r}
+aircraft_strikes_tidy <-
+  aircraft_strikes %>%
+  na_if("UNKNOWN") %>%
+  na_if("UNKNOWN BIRD") %>%
+  na_if("UNK") %>%
+  na_if("UNKNOWN BIRD - SMALL") %>%
+  na_if("UNKNOWN BIRD - MEDIUM")
+aircraft_strikes
+```
+
+```{r}
+aircraft_strikes_tidy <-
+  aircraft_strikes %>%
+  filter(!Species=="UNKNOWN BIRD - SMALL",
+         !Species=="NA",
+         !Species=="UNKNOWN BIRD - MEDIUM",
+         !Species=="UNKNOWN BIRD - LARGE",
+         !Species=="UNKNOWN BIRD",
+         !`Height (feet)`=="NA")
+aircraft_strikes_tidy
+```
+
+```{r}
+aircraft_species <-
+  aircraft_strikes_tidy %>%
+  filter(!`Phase of Flight`=="NA",
+         !Size=="NA") %>%
+  select(Size,`Height (feet)`, `Phase of Flight`)
+aircraft_species
+```
+
+## Produce a summary of the birds that were struck. Be sure to include the minimum, maximum, and total n of species struck.
+
+```{r}
+aircraft_strikes_tidy %>%
+  summarize(min_Species=min(Species),
+            max_Species=max(Species),
+            total=n())
+```
+
+## Between the Acadian Flycatcher and the Zebra Dove, produce a summary that shows the phase of flights they were struck at.
+---
+```{r}
+aircraft_strikes_tidy %>%
+  filter(!`Phase of Flight`=="NA",
+         Species=="ACADIAN FLYCATCHER" | Species=="ZEBRA DOVE") %>%
+  select(`Phase of Flight`, Species) %>%
+  arrange(desc(`Phase of Flight`))
+```
+
+## Graph the distribution of the height during flights that birds were struck at with a histogram and density curve.
+
+##Plot
+```{r}
+rip_birds <-
+  aircraft_strikes_tidy %>%
+  ggplot(aes(x=log10(`Height (feet)`)))+
+  geom_histogram(aes(y=..density..), binwidth = .4, fill="steelblue", alpha=0.8, color="black")+
+    geom_density(color="red")+
+  labs(title="Distribution of Height")
+rip_birds
+```
+
+
+## Birds were struck at different phases and heights during airplane flights. What was the most common phase of flight that birds were struck? Likewise, what was the most common height that they were struck at?
+
+## Plot
+```{r}
+aircraft_species <-
+  aircraft_strikes_tidy %>%
+  filter(!`Phase of Flight`=="NA",
+         !Size=="NA") %>%
+  select(Size, `Height (feet)`, `Phase of Flight`) %>%
+  ggplot(aes(x=Size, y=`Height (feet)`))+
+  geom_bar(stat="identity")+
+  facet_wrap(~`Phase of Flight`)+
+  labs(title="Phases and Height of Flight Of Birds Struck")
+aircraft_species
+```
+
+## What is the relationship between phase of flight and weather conditions at the time of flight?
+
+## Plot
+```{r}
+weather <-
+  aircraft_strikes_tidy %>%
+  filter(!`Phase of Flight`=="NA",
+         !Sky=="NA",
+         !Precipitation=="NA") %>%
+  select(`Phase of Flight`, Sky, `Birds Struck`) %>%
+  ggplot(aes(x=`Phase of Flight`, fill=Sky))+
+  geom_bar(position="dodge")+
+  coord_flip()+
+  labs(title="x")
+weather
+```
+
+##Tricia's Slides
+
+## Which species is recorded as being hit the most? {.smaller}
+```{r}
+aircraft_strikes %>% 
+  filter(Species!= "UNKNOWN") %>% 
+  count(Species) %>% 
+  arrange(desc(n)) 
+```
+
+## On average, how fast were the aircrafts going when they collided with the wildlife? {.smaller}
+
+---
+```{r}
+aircraft_strikes %>% 
+  ggplot(aes(x=Speed)) +
+  geom_histogram(fill="yellowgreen", alpha=.8, color="forestgreen")+
+  labs(title = "Distribution of Speed")
+```
+
+## American kestrels and red-tailed hawks are two common birds of prey. Let's compare the average speeds of the aircrafts when they collided with these birds. {.smaller}
+
+---
+```{r}
+aircraft_strikes %>% 
+  filter(Species=="AMERICAN KESTREL" | Species =="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=Speed))+
+  geom_boxplot(color="darkgray")+
+  labs(title = "Speed of Collisions involving American Kestrels vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Speed")+
+  theme(plot.title = element_text(size = rel(1.25)))
+```
+
+## Based on the boxplot, do you think these speeds are above average, average, or below average compared to other species? {.smaller}
+
+These speeds lie near the peak of the distribution, suggesting that they are average.
+
+## Let's see what the real average speed is and compare these speeds to the average. {.smaller}
+
+```{r}
+aircraft_strikes %>% 
+  summarise(avgspeed=mean(Speed, na.rm=T))
+```
+```{r}
+aircraft_strikes %>% 
+  filter(Species=="AMERICAN KESTREL") %>% 
+  summarise(avgspeed_kestrel=mean(Speed, na.rm=T))
+```
+
+```{r}
+aircraft_strikes %>% 
+  filter(Species=="RED-TAILED HAWK") %>% 
+  summarise(avgspeed_hawk=mean(Speed, na.rm=T))
+```
+
+These average speeds of the aircrafts that collided with American kestrels and red-tailed hawks are somewhat below average.
+
+## More filtering
+```{r}
+species <- 
+aircraft_strikes %>% 
+  filter(!Size=="NA", 
+         !Species=="UNKNOWN BIRD - SMALL",
+         !Species=="NA",
+         !Species=="UNKNOWN BIRD - MEDIUM",
+         !Species=="UNKNOWN BIRD - LARGE")
+```
+
+
+## Let's also look at the speeds of the aircrafts when they struck geese versus the red-tailed hawk | In general, which species encountered faster moving aircrafts? {.smaller}
+
+## Plot
+```{r}
+species %>% 
+  filter(Species=="GEESE" | Species=="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=Speed))+
+  geom_boxplot(fill="lavender")+
+  labs(title = "Collisions of Geese vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Speed")+
+  theme(plot.title = element_text(size = rel(1.25)))+
+  scale_fill_brewer(palette = "BrBG")+
+  theme_light()
+```
+
+##Did the sky conditions affect the speeds at which they collided with the aircrafts? {.smaller}
+
+```{r}
+species %>% 
+  filter(Species=="GEESE" | Species=="RED-TAILED HAWK") %>% 
+  ggplot(aes(x=Species, y=Speed, fill=Sky))+
+  geom_boxplot()+
+  labs(title = "Collisions of Geese vs. Red-Tailed Hawks",
+       x = "Species",
+       y = "Speed")+
+  theme(plot.title = element_text(size = rel(1.25)))+
+  scale_fill_brewer(palette = "BrBG")+
+  theme_light()
+```
