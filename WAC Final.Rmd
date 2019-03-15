@@ -53,7 +53,7 @@ names(aircraft_strikes)
 gather(aircraft_strikes)
 ```
 
----
+## Cleaning up Data {.smaller}
 ```{r}
 aircraft_strikes_tidy <-
   aircraft_strikes %>% 
@@ -71,7 +71,7 @@ aircraft_strikes_tidy
 names(aircraft_strikes_tidy)
 ```
 
----
+## Strikes by Airline {.smaller}
 ```{r}
 strikes_by_airline <- 
 aircraft_strikes_tidy %>% 
@@ -88,53 +88,12 @@ strikes_by_airline %>%
   ggplot(aes(x=reorder(Operator, count), y=count,fill=Operator))+
   geom_col()+
   coord_flip()+
-  labs(title="Strikesm by Airline",
+  labs(title="Strikes by Airline",
        x="Airlines",
        y="Number of Strikes")
 ```
 
----
-```{r}
-aircraft_strikes_tidy %>% 
-  count(Species) %>% 
-  arrange(desc(n))
-```
-
----
-```{r}
-aircraft_strikes_tidy %>% 
-  filter(!`Birds Struck`>1) %>% 
-  ggplot(aes(x=Size, y=as.numeric(`Birds Struck`)))+
-  geom_col(fill="lightseagreen",alpha=0.5)+
-  labs(title="Birds Struck by Size",
-       x="Bird Size",
-       y="Number of Birds Struck")
-```
-
----
-```{r}
-aircraft_strikes_tidy %>%
-  filter(!Size=="NA") %>% 
-  group_by(Size) %>% 
-  summarize(count=n()) %>% 
-  ggplot(aes(x=Size, y=count))+
-  geom_col(fill="lightseagreen",alpha=0.5)+
-  labs(title="Number of Birds by Size",
-       x="Bird Size",
-       y="Number of Birds")
-```
-
----
-```{r}
-airport_species <- 
-aircraft_strikes_tidy %>% 
-  group_by(Airport, Species) %>% 
-  summarize(count=n()) %>% 
-  arrange(desc(count))
-airport_species
-```
-
----
+## Strikes by Airport
 ```{r}
 strikes_by_airport <- 
 aircraft_strikes_tidy %>% 
@@ -155,7 +114,7 @@ strikes_by_airport %>%
        y="Number of Strikes",
        x="Airport")
 ```
----
+## Strikes by State
 ```{r}
 strikes_by_state <- 
 aircraft_strikes_tidy %>% 
@@ -175,14 +134,7 @@ strikes_by_state %>%
        x="State",
        y="Number of Strikes")
 ```
----
-```{r}
-airports_by_state <- 
-aircraft_strikes_tidy %>% 
-  select(State, Airport) %>% 
-  count(State) 
-airports_by_state
-```
+
 
 ## Michelle's Slides
 
